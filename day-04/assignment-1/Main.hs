@@ -66,7 +66,6 @@
 module Main where
 
 import AdventOfCode
-import qualified Data.CircularList as C
 import qualified Data.Text as T
 import qualified Text.Parsec as P
 import qualified Data.Maybe as Maybe
