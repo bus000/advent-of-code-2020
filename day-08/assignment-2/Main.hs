@@ -99,7 +99,7 @@ execute' state
     | pc >= len = Right state'
     | otherwise = execute' state'
   where
-    state'@(ExecutionState _ len pc acc pcs) = executeStatement state
+    state'@(ExecutionState _ len pc _ pcs) = executeStatement state
 
 executeStatement :: ExecutionState -> ExecutionState
 executeStatement ex@(ExecutionState _ _ pc accumulator pcs) =
