@@ -69,37 +69,34 @@ import qualified Data.Text as T
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Number as P
 import qualified Data.List as L
-
-data Tree a = Empty | Node a [Tree a] deriving (Show, Eq, Ord)
+import qualified Data.Map as Map
+import Data.Ord (Down(..))
 
 main :: IO ()
 main = defaultMain parseInput handleInput
 
-handleInput :: [Integer] -> IO ()
-handleInput [] = putStrLn "Cannot find adapter path when there is none."
-handleInput adapters = print . countNodesWhere (== output) . buildTree $ adapters'
+handleInput :: [Int] -> IO ()
+handleInput = print . adapterPathNumbers
+
+adapterPathNumbers :: [Int] -> Int
+adapterPathNumbers adapters = Map.findWithDefault 0 0 pathNumbers
   where
-    output = maximum adapters + 3
-    input = 0
-    adapters' = L.sort $ output:input:adapters
+    adapters' = 0:adapters
+    sorted = L.sortOn Down adapters'
+    target = head sorted + 3
+    initialMap = Map.singleton target 1
+    pathNumbers = foldl f initialMap sorted
 
-buildTree :: [Integer] -> Tree Integer
-buildTree [] = Empty
-buildTree [x] = Node x []
-buildTree (x:xs) = Node x subtrees
+f :: Map.Map Int Int -> Int -> Map.Map Int Int
+f cache x = Map.insert x result cache
   where
-    subtrees = map buildTree validAdapters
-    valid = length $ takeWhile (<= x+3) xs
-    validAdapters = take valid . init . L.tails $ xs
+    r1 = Map.findWithDefault 0 (x + 1) cache
+    r2 = Map.findWithDefault 0 (x + 2) cache
+    r3 = Map.findWithDefault 0 (x + 3) cache
+    result = r1 + r2 + r3
 
-countNodesWhere :: (a -> Bool) -> Tree a -> Int
-countNodesWhere _ Empty = 0
-countNodesWhere p (Node x subtrees)
-    | p x = 1 + sum (map (countNodesWhere p) subtrees)
-    | otherwise = sum (map (countNodesWhere p) subtrees)
-
-parseInput :: T.Text -> Either P.ParseError [Integer]
+parseInput :: T.Text -> Either P.ParseError [Int]
 parseInput = P.parse (parseInts <* P.eof) ""
 
-parseInts :: P.Parsec T.Text () [Integer]
+parseInts :: P.Parsec T.Text () [Int]
 parseInts = P.int `P.endBy` P.newline
