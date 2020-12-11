@@ -38,7 +38,8 @@
  - * 64 and 66 would both be valid, as they are the result of 19+45 and 21+45
  -   respectively.
  -
- - Here is a larger example which only considers the previous 5 numbers (and has a preamble of length 5):
+ - Here is a larger example which only considers the previous 5 numbers (and has
+ - a preamble of length 5):
  -
  -    35
  -    20
