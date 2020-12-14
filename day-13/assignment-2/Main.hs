@@ -84,46 +84,42 @@ import AdventOfCode
 import qualified Data.Text as T
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Number as P
-import qualified Data.List as L
 
 main :: IO ()
 main = defaultMain parseInput handleInput
 
 type Time = Integer
+type Offset = Integer
 
-data Departure = Shuttle Time | Pass deriving (Show, Eq, Ord)
+data Departure = Shuttle !Time !Offset | Pass !Offset deriving (Show, Eq, Ord)
 
-data Competition = Competition [Departure] deriving (Show, Eq, Ord)
+data Competition = Competition ![Departure] deriving (Show, Eq, Ord)
+
+data Candidate = Candidate
+    { _candidate :: !Integer
+    , _repeats   :: !Integer
+    } deriving (Show, Eq, Ord)
 
 handleInput :: Competition -> IO ()
-handleInput = print . head . solveCompetition
+handleInput = print . _candidate . solveCompetition
 
-solveCompetition :: Competition -> [Integer]
-solveCompetition (Competition []) = [0]
-solveCompetition (Competition (Pass:departures)) =
+solveCompetition :: Competition -> Candidate
+solveCompetition (Competition []) = Candidate 0 1
+solveCompetition (Competition (Pass _:departures)) =
     solveCompetition (Competition departures)
 solveCompetition (Competition departures) =
-    foldr findNext [0..] $ zip [0..] departures
+    foldr nextCandidate initialCandidate departures
   where
-    findNext (step, departure) candidates = nextCandidates candidates step departure
+    initialCandidate = Candidate 0 1
 
-nextCandidates :: [Integer] -> Integer -> Departure -> [Integer]
-nextCandidates candidates step Pass = candidates
-nextCandidates candidates@(first:_) step (Shuttle time) = candidates'
+nextCandidate :: Departure -> Candidate -> Candidate
+nextCandidate (Pass _) candidate = candidate
+nextCandidate (Shuttle departures offset) (Candidate candidate repeats) =
+    Candidate candidate' repeats'
   where
-    firstDeparture = head . dropWhile (\x -> x `mod` time /= 0) $ [first..]
-    departures = [firstDeparture, firstDeparture+time..]
-    shouldMatch = map (+step) candidates
-    candidates' = map (\x->x-step) $ common departures shouldMatch
-
--- Find common elements of two SORTED lists.
-common :: Ord a => [a] -> [a] -> [a]
-common [] _ = []
-common _ [] = []
-common (x:xs) (y:ys)
-    | x < y = common xs (y:ys)
-    | x > y = common (x:xs) ys
-    | x == y = x:common xs ys
+    candidate' = head . dropWhile notMatch $ [candidate, candidate+repeats..]
+    repeats' = repeats * departures
+    notMatch x = (x + offset) `mod` departures /= 0
 
 parseInput :: T.Text -> Either P.ParseError Competition
 parseInput = P.parse (parseCompetition <* P.eof) ""
@@ -133,7 +129,11 @@ parseCompetition = Competition <$>
     (P.int *> P.newline *> parseDepartures <* P.newline)
 
 parseDepartures :: P.Parsec T.Text () [Departure]
-parseDepartures = P.choice [parseShuttleId, parsePass] `P.sepBy` P.char ','
+parseDepartures = zipWith (curry f) [0..] <$>
+    (P.choice [parseShuttleId, parsePass] `P.sepBy` P.char ',')
   where
-    parseShuttleId = Shuttle <$> P.int
-    parsePass = P.char 'x' *> pure Pass
+    parseShuttleId = Just <$> P.int
+    parsePass = P.char 'x' *> pure Nothing
+
+    f (n, Nothing) = Pass n
+    f (n, Just s) = Shuttle s n
