@@ -58,7 +58,6 @@
  -
  - Given your starting numbers, what will be the 2020th number spoken?
  -}
-{-# LANGUAGE RecordWildCards #-}
 module Main where
 
 import AdventOfCode
