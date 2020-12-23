@@ -16,12 +16,14 @@ module Data.CircularList
     -- Deletion.
     , removeRight
     , removeLeft
+    , removeRightN
 
     -- Movement.
     , moveRight
     , moveLeft
     , moveRightN
     , moveLeftN
+    , seekRight
 
     -- Insertion.
     , insertRight
@@ -94,6 +96,15 @@ removeLeft (Circ [] _ rights) = Circ lefts x []
   where
     (x:lefts) = reverse rights
 
+removeRightN :: CircularList a -> Int -> (CircularList a, [a])
+removeRightN circ 0 = (circ, [])
+removeRightN circ n = case current circ of
+    Just x ->
+        let circ' = removeRight circ
+            (circ'', xs) = removeRightN circ' (n-1)
+        in (circ'', x:xs)
+    Nothing -> (circ, [])
+
 moveRight :: CircularList a -> CircularList a
 moveRight Empty = Empty
 moveRight (Circ [] x []) = Circ [] x []
@@ -115,6 +126,12 @@ moveLeft (Circ [] x rights) = Circ lefts x' [x]
 
 moveLeftN :: CircularList a -> Int -> CircularList a
 moveLeftN = applyN moveLeft
+
+seekRight :: CircularList a -> (a -> Bool) -> CircularList a
+seekRight Empty _ = Empty
+seekRight circ@(Circ _ x _) p
+    |  p x = circ
+    | otherwise = seekRight (moveRight circ) p
 
 insertRight :: a -> CircularList a -> CircularList a
 insertRight x Empty = Circ [] x []
