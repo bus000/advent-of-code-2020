@@ -88,7 +88,6 @@ import AdventOfCode
 import qualified Data.Text as T
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Number as P
-import qualified Data.Maybe as Maybe
 
 main :: IO ()
 main = defaultMain parseInput handleInput
